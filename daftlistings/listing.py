@@ -509,6 +509,7 @@ class Listing:
             logging.error("Error getting the Ber Code. Error message: " + e.args[0])
             return None
 
+        
     @property
     def commercial_area_size(self):
         """
@@ -528,6 +529,45 @@ class Listing:
             )
             return "N/A"
 
+        
+        
+    @property
+    def town(self):
+        """
+        This method returns the properties town.
+        :return:
+        """
+        try:
+            if self.data_from_search:
+                address = self._ad_page_content.find("h1",{"class":"PropertyMainInformation__address"}).text
+                addresses = address.split(", ")
+                town = addresses[-2]
+
+                return town
+
+        except Exception as e:
+            logging.error("Error getting town. Error message: " + e.args[0])
+            return
+        
+    @property
+    def county(self):
+        """
+        This method returns the properties county.
+        :return:
+        """
+        try:
+            if self.data_from_search:
+                address = self._ad_page_content.find("h1",{"class":"PropertyMainInformation__address"}).text
+                addresses = address.split(", ")
+                county = addresses[-1]
+
+                return county
+
+        except Exception as e:
+            logging.error("Error getting county. Error message: " + e.args[0])
+            return
+        
+        
     @property
     def advertiser_name(self):
         """
@@ -564,6 +604,7 @@ class Listing:
             )
             return "N/A"
 
+        
     def contact_advertiser(self, name, email, contact_number, message):
         """
         This method allows you to contact the advertiser of a listing.
@@ -634,6 +675,8 @@ class Listing:
             "longitude": self.longitude,
             "ber_code": self.ber_code,
             "commercial_area_size": self.commercial_area_size,
+            "town":self.town,
+            "county":self.county
         }
 
     def __repr__(self):
