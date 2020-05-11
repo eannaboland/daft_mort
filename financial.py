@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 import numpy as np
 import re
 from datetime import datetime
@@ -6,13 +6,25 @@ import sys
 import numpy_financial as npf
 import requests
 from bs4 import BeautifulSoup
-    
+import jsonstat
+
 %matplotlib inline
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 
-def monthly_mortgage_cost(purchase_price, years, mortgage_rate, down_payment):
-    return npf.pmt(pv=purchase_price*(1-down_payment),nper=years*12,rate=mortgage_rate/12)
+# To Get
+
+# Rent Data - rent per room percentiles
+# mortgage_protection_insurance
+# utilities
+# trash
+# vacancy_rate
+# LPT
+
+
+
+def monthly_mortgage_cost(purchase_price, years, mortgage_rate, down_payment_proportion):
+    return npf.pmt(pv=purchase_price*(1-down_payment_proportion), nper=years*12, rate=mortgage_rate/12)
 
 
 def property_rent_percentiles(rent_data , buckets=10): # TBD
@@ -93,5 +105,50 @@ def pull_aib_rates():
                 pass
         overall_data[i] = table_data
         return overall_data
+
+def get_property_inflation_values(start, end):
+
+    collection = jsonstat.from_url('https://statbank.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/HPM06', 'tttt.json')
+    df = collection.dataset(0).to_data_frame()
     
     
+    con = df['Type of Residential Property'] == 'Dublin - all residential properties'
+    con1 = df['Month'] == start
+    con2 = df.Statistic == 'Residential Property Price Index (Base Jan 2005 = 100)'
+    s_dub = df[con & con1 & con2]['Value'].values[0]
+    
+    con = df['Type of Residential Property'] == 'National excluding Dublin - all residential properties'
+    con1 = df['Month'] == start
+    con2 = df.Statistic == 'Residential Property Price Index (Base Jan 2005 = 100)'
+    s_out = df[con & con1 & con2]['Value'].values[0]
+    
+    
+    con = df['Type of Residential Property'] == 'Dublin - all residential properties'
+    con1 = df['Month'] == end
+    con2 = df.Statistic == 'Residential Property Price Index (Base Jan 2005 = 100)'
+    e_dub = df[con & con1 & con2]['Value'].values[0]
+    
+    con = df['Type of Residential Property'] == 'National excluding Dublin - all residential properties'
+    con1 = df['Month'] == end
+    con2 = df.Statistic == 'Residential Property Price Index (Base Jan 2005 = 100)'
+    e_out = df[con & con1 & con2]['Value'].values[0]
+    
+    return s_dub, e_dub, s_out, e_out
+        
+    
+def estimate_lpt(price, location):
+    lpt_valuation_date = '2013M01'
+    if pd.to_datetime('today').date().month//4 == 0:
+        q = '04'
+    else:
+        q = '0' + str(x.month//4)
+    today = str(pd.to_datetime('today').date())[0:4] + 'M' + q
+    old_dub, new_dub, old_out, new_out = get_property_inflation_values(start=lpt_valuation_date, end=today)
+    if location == 'Dublin':
+        inverse_inflation = old_dub/new_dub
+    else:
+        inverse_inflation = old_out/new_out
+    return price * inverse_inflation * .0018
+
+
+
