@@ -139,10 +139,11 @@ def get_property_inflation_values(start, end):
 def estimate_lpt(price, location):
     lpt_valuation_date = '2013M01'
     if pd.to_datetime('today').date().month//4 == 0:
-        q = '04'
+        today = str(int(str(pd.to_datetime('today').date())[0:4]) - 1) + 'M04' 
     else:
         q = '0' + str(pd.to_datetime('today').date().month//4)
-    today = str(pd.to_datetime('today').date())[0:4] + 'M' + q
+        today = str(pd.to_datetime('today').date())[0:4] + 'M' + q
+   
     old_dub, new_dub, old_out, new_out = get_property_inflation_values(start=lpt_valuation_date, end=today)
     if location == 'Dublin':
         inverse_inflation = old_dub/new_dub
